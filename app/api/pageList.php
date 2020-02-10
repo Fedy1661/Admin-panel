@@ -1,4 +1,5 @@
 <?php
+require_once('./checkPermission.php');
 $htmlfiles = glob('../../*.html');
 $response = [];
 foreach ($htmlfiles as $file) {

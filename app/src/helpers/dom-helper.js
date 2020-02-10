@@ -37,4 +37,17 @@ export default class DOMHelper {
       element.parentNode.replaceChild(element.firstChild, element);
     });
   }
+  // Добавляет всем картинкам атрибут с index'ом, чтобы можно было найти и заменить каритнку.
+  static wrapImages(dom) {
+    dom.body.querySelectorAll('img').forEach((img, i) => {
+      img.setAttribute('editableimgid', i);
+    });
+    return dom;
+  }
+  // Убирает атрибут
+  static unwrapImages(dom) {
+    dom.body.querySelectorAll('[editableimgid]').forEach(img => {
+      img.removeAttribute('editableimgid');
+    });
+  }
 }

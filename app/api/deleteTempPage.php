@@ -1,4 +1,5 @@
 <?php
+require_once('./checkPermission.php');
 $_POST = json_decode(file_get_contents("php://input"), true);
 $file = '../../wemfiwhfwuef992ZZdd.html';
 if (file_exists($file)) {
