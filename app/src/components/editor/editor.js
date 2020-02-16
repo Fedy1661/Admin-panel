@@ -26,13 +26,6 @@ export default class extends Component {
       loginLengthError: false
     };
     this.virtualDOM = null;
-    this.isLoaded = this.isLoaded.bind(this);
-    this.isLoading = this.isLoading.bind(this);
-    this.save = this.save.bind(this);
-    this.init = this.init.bind(this);
-    this.login = this.login.bind(this);
-    this.logout = this.logout.bind(this);
-    this.restoreBackup = this.restoreBackup.bind(this);
   }
   componentDidMount() {
     this.checkAuth();
@@ -43,15 +36,15 @@ export default class extends Component {
       this.init(null, this.currentPage);
     }
   }
-  checkAuth() {
+  checkAuth = () => {
     axios.get('./api/checkAuth.php').then(res => {
       console.log(res);
       this.setState({
         auth: res.data.auth
       });
     });
-  }
-  login(password) {
+  };
+  login = password => {
     if (password.length > 5) {
       axios.post('./api/login.php', { password }).then(res => {
         console.log(res.data.auth);
@@ -67,8 +60,8 @@ export default class extends Component {
         loginLengthError: true
       });
     }
-  }
-  init(e, page) {
+  };
+  init = (e, page) => {
     if (e) e.preventDefault();
     if (this.state.auth) {
       this.isLoading();
@@ -77,15 +70,15 @@ export default class extends Component {
       this.loadPageList();
       this.loadBackupsList();
     }
-  }
-  logout() {
+  };
+  logout = () => {
     axios.get('./api/logout.php').then(() => {
       window.location.replace('/');
     });
-  }
-  open(page) {
+  };
+  open = page => {
     this.currentPage = page;
-
+console.log(`page ${page}`)
     axios
       .get(`../${page}?rnd=${Math.random()}`)
       .then(res => DOMHelper.parseStrToDOM(res.data))
@@ -102,8 +95,8 @@ export default class extends Component {
       .then(() => this.enableEditing())
       .then(() => this.injectStyles())
       .then(this.isLoaded);
-  }
-  save() {
+  };
+  save = () => {
     this.isLoading();
     const newDom = this.virtualDOM.cloneNode(this.virtualDOM);
     DOMHelper.unwrapTextNodes(newDom);
@@ -115,8 +108,8 @@ export default class extends Component {
       .catch(() => this.showNotification('Ошибка!..', 'danger'))
       .finally(this.isLoaded)
       .finally(() => this.loadBackupsList());
-  }
-  injectStyles() {
+  };
+  injectStyles = () => {
     const style = this.iframe.contentDocument.createElement('style');
     style.innerHTML = `
     text-editor:hover, [editableimgid]:hover {
@@ -129,8 +122,8 @@ export default class extends Component {
     }
     `;
     this.iframe.contentDocument.head.appendChild(style);
-  }
-  enableEditing() {
+  };
+  enableEditing = () => {
     this.iframe.contentDocument.body
       .querySelectorAll('text-editor')
       .forEach(element => {
@@ -157,21 +150,21 @@ export default class extends Component {
           this.showNotification
         );
       });
-  }
-  loadPageList() {
+  };
+  loadPageList = () => {
     axios
       .get('./api/pageList.php')
-      .then(res => this.setState({ pageList: res.data }));
+      .then(res => console.log(res));
     this.setState({ newPageName: '' });
-  }
-  loadBackupsList() {
+  };
+  loadBackupsList = () => {
     axios.get('./backups/backups.json').then(res =>
       this.setState({
         backupsList: res.data.filter(backup => backup.page === this.currentPage)
       })
     );
-  }
-  restoreBackup(e, backup) {
+  };
+  restoreBackup = (e, backup) => {
     if (e) e.preventDefault();
     UIkit.modal
       .confirm(
@@ -188,16 +181,16 @@ export default class extends Component {
       .then(() => {
         this.open(this.currentPage, this.isLoaded);
       });
-  }
-  isLoading() {
+  };
+  isLoading = () => {
     this.setState({ loading: true });
-  }
-  isLoaded() {
+  };
+  isLoaded = () => {
     this.setState({ loading: false });
-  }
-  showNotification(message, status) {
+  };
+  showNotification = (message, status) => {
     UIkit.notification({ message, status, pos: 'bottom-right' });
-  }
+  };
   render() {
     const {
       loading,

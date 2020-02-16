@@ -2,7 +2,10 @@ const gulp = require('gulp');
 const webpack = require('webpack-stream');
 const dist = `C:/Ospanel/OSPanel/domains/panel/admin`;
 const sass = require('gulp-sass');
-
+const autoprefixer = require('autoprefixer');
+const cleanCSS = require('gulp-clean-css');
+const postCSS = require('gulp-postcss');
+const prod = './build/';
 // Здесь должен быть путь к папке admin в вашем проекте на локальном сервере
 
 gulp.task('copy-html', () => {
@@ -83,5 +86,53 @@ gulp.task(
     'build-js'
   )
 );
+
+gulp.task('prod', () => {
+  gulp.src('./app/src/index.html').pipe(gulp.dest(prod));
+  gulp.src('./app/api/**/.*').pipe(gulp.dest(prod + '/api'));
+  gulp.src('./app/api/**/*.*').pipe(gulp.dest(prod + '/api'));
+  gulp.src('./app/assets/**/*.*').pipe(gulp.dest(prod + '/assets'));
+  gulp
+    .src('./app/src/main.js')
+    .pipe(
+      webpack({
+        mode: 'production',
+        output: {
+          filename: 'script.js'
+        },
+        module: {
+          rules: [
+            {
+              test: /\.m?js$/,
+              exclude: /(node_modules|bower_components)/,
+              use: {
+                loader: 'babel-loader',
+                options: {
+                  presets: [
+                    [
+                      '@babel/preset-env',
+                      {
+                        debug: false,
+                        corejs: 3,
+                        useBuiltIns: 'usage'
+                      }
+                    ],
+                    '@babel/react'
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      })
+    )
+    .pipe(gulp.dest(prod));
+  return gulp
+    .src('./app/scss/style.scss')
+    .pipe(sass().on('error', sass.logError))
+    .pipe(postCSS([autoprefixer()]))
+    .pipe(cleanCSS())
+    .pipe(gulp.dest(prod));
+});
 
 gulp.task('default', gulp.parallel('watch', 'build'));

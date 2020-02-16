@@ -1,6 +1,6 @@
 <?php
 require_once('./checkPermission.php');
-$htmlfiles = glob('../../*.html');
+$htmlfiles = glob('../../**/*.html');
 $response = [];
 foreach ($htmlfiles as $file) {
   array_push($response, basename($file));
