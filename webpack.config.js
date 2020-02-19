@@ -7,16 +7,43 @@ const MiniCSSExtractPlugin = require('mini-css-extract-plugin');
 const isDev = process.env.NODE_ENV === 'development';
 const isProd = !isDev;
 
-const filename = ext => (isDev ? `[name].${ext}` : `[name].[hash].${ext}`);
+const dist = isDev ? 'C:\\Ospanel\\OSPanel\\domains\\panel' : './dist';
+// const dist = './dist';
+
+const filename = (ext) => (isDev ? `[name].${ext}` : `[name].[hash].${ext}`);
 const optimization = () => {
   const config = {};
-  // if (isProd) {
-  //   config.minimizer = [
-  //     new OptimizeCSSAssetWebpackPlugin(),
-  //     new TerserWebpackPlugin()
-  //   ];
-  // }
   return config;
+};
+
+const devTool = () => {
+  let tool = '';
+  if (isDev) tool = 'source-map';
+  return tool;
+};
+
+const plugins = () => {
+  const initial = [
+    new HTMLWebpackPlugin({
+      // Auto HTML
+      template: './src/index.html',
+      minify: { collapseWhitespace: isProd }
+    }),
+    new CopyWebpackPlugin([
+      // КОпирование
+      {
+        from: path.resolve(__dirname, 'app/api/'),
+        to: path.resolve(`${dist}/admin/api`)
+      },
+      {
+        from: path.resolve(__dirname, 'app/.htaccess'),
+        to: path.resolve(`${dist}/admin/`)
+      }
+    ]),
+    new MiniCSSExtractPlugin({ filename: filename('css') })
+  ];
+  if (isProd) initial.push(new CleanWebpackPlugin());
+  return initial;
 };
 module.exports = {
   context: path.resolve(__dirname, 'app/'),
@@ -24,28 +51,18 @@ module.exports = {
   entry: ['@babel/polyfill', './src/main.js'],
   output: {
     filename: filename('js'),
-    path: path.resolve(`C:/Ospanel/OSPanel/domains/panel/admin`)
+    path: path.resolve(`${dist}/admin`)
   },
+  devtool: devTool(),
   optimization: optimization(),
   devServer: { port: 3000, hot: isDev },
-  plugins: [
-    new HTMLWebpackPlugin({
-      // Auto HTML
-      template: './src/index.html',
-      minify: { collapseWhitespace: isProd }
-    }),
-    new CleanWebpackPlugin(), // Очистка других файлов
-    new CopyWebpackPlugin([
-      // КОпирование
-      {
-        from: path.resolve(__dirname, 'app/api/'),
-        to: path.resolve(`C:/Ospanel/OSPanel/domains/panel/admin/api`)
-      }
-    ]),
-    new MiniCSSExtractPlugin({ filename: filename('css') })
-  ],
+  plugins: plugins(),
   module: {
     rules: [
+      {
+        test: /\.(png|svg|jpg|gif)$/,
+        use: ['file-loader']
+      },
       {
         test: /\.scss$/,
         use: [

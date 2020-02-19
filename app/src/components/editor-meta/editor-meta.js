@@ -1,22 +1,20 @@
 import React, { Component } from 'react';
 export default class extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      meta: {
-        title: '',
-        keywords: '',
-        description: ''
-      }
-    };
-    this.applyMeta = this.applyMeta.bind(this);
-  }
+  state = {
+    meta: {
+      title: '',
+      keywords: '',
+      description: ''
+    }
+  };
 
   componentDidMount() {
     this.getMeta(this.props.virtualDOM);
   }
 
-  getMeta(virtualDOM) {
+  getMeta = virtualDOM => {
+    if (virtualDOM === false) return;
+
     this.title =
       virtualDOM.head.querySelector('title') ||
       virtualDOM.head.appendChild(virtualDOM.createElement('title'));
@@ -45,14 +43,14 @@ export default class extends Component {
         description: this.description.getAttribute('content')
       }
     });
-  }
+  };
 
-  applyMeta() {
+  applyMeta = () => {
     this.title.innerHTML = this.state.meta.title;
     this.keywords.setAttribute('content', this.state.meta.keywords);
     this.description.setAttribute('content', this.state.meta.description);
-  }
-  onValueChange(e) {
+  };
+  onValueChange = e => {
     const type = e.target.getAttribute('data-type');
     e.persist();
     this.setState(({ meta }) => ({
@@ -61,17 +59,16 @@ export default class extends Component {
         [type]: e.target.value
       }
     }));
-  }
+  };
   componentDidUpdate(prevProps) {
     if (this.props.virtualDOM !== prevProps.virtualDOM) {
       this.getMeta(this.props.virtualDOM);
     }
   }
   render() {
-    const { target } = this.props;
     const { title, keywords, description } = this.state.meta;
     return (
-      <div id={target} className="uk-flex-top" uk-modal="true">
+      <div id="modal-meta" className="uk-flex-top" uk-modal="true">
         <div className="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
           <div className="uk-modal-header">
             <h2 className="uk-modal-title uk-text-center">

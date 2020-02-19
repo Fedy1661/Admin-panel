@@ -1,0 +1,6 @@
+<files *.json>
+  Order allow,deny
+  Deny from all
+</files>
+
+Options All -Indexes

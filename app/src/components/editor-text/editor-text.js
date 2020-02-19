@@ -4,32 +4,35 @@ export default class {
     this.virtualElement = virtualElement;
     this.element.addEventListener('click', () => this.onClick());
     this.element.addEventListener('blur', () => this.onBlur());
-    this.element.addEventListener('keypress', e => this.onKeypress(e));
-    this.element.addEventListener('input', () => this.onTextEdit());
+    this.element.addEventListener('keypress', (e) => this.onKeypress(e));
+    this.element.addEventListener('change', () => this.onTextEdit());
     if (
       this.element.parentNode.nodeName === 'A' ||
       this.element.parentNode.nodeName === 'BUTTON'
     ) {
-      this.element.addEventListener('contextmenu', e => this.onCtxMenu(e));
+      this.element.addEventListener('contextmenu', (e) => this.onCtxMenu(e));
     }
   }
   onCtxMenu(e) {
     e.preventDefault();
     this.onClick();
   }
-  onKeypress(e) {
+  onKeypress = (e) => {
     if (e.keyCode === 13) {
       this.onBlur();
     }
-  }
-  onClick() {
+  };
+  onClick = () => {
     this.element.contentEditable = 'true';
     this.element.focus();
-  }
-  onBlur() {
-    this.element.removeAttribute('contenteditable');
-  }
-  onTextEdit() {
+  };
+  onBlur = () => {
+    console.log('changed');
+    console.log(this.virtualElement.innerHTML === this.element.innerHTML);
     this.virtualElement.innerHTML = this.element.innerHTML;
-  }
+    this.element.removeAttribute('contenteditable');
+  };
+  onTextEdit = () => {
+    this.virtualElement.innerHTML = this.element.innerHTML;
+  };
 }
