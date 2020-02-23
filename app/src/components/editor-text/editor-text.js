@@ -1,5 +1,7 @@
+import { setStatusDOM } from '../../actions';
+
 export default class {
-  constructor(element, virtualElement) {
+  constructor(element, virtualElement, checkStatusDOM) {
     this.element = element;
     this.virtualElement = virtualElement;
     this.element.addEventListener('click', () => this.onClick());
@@ -12,6 +14,7 @@ export default class {
     ) {
       this.element.addEventListener('contextmenu', (e) => this.onCtxMenu(e));
     }
+    this.checkStatusDOM = checkStatusDOM;
   }
   onCtxMenu(e) {
     e.preventDefault();
@@ -27,9 +30,10 @@ export default class {
     this.element.focus();
   };
   onBlur = () => {
-    console.log('changed');
-    console.log(this.virtualElement.innerHTML === this.element.innerHTML);
-    this.virtualElement.innerHTML = this.element.innerHTML;
+    if (this.virtualElement.innerHTML !== this.element.innerHTML) {
+      this.virtualElement.innerHTML = this.element.innerHTML;
+      this.checkStatusDOM();
+    }
     this.element.removeAttribute('contenteditable');
   };
   onTextEdit = () => {

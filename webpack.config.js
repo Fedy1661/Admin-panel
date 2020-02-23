@@ -7,8 +7,8 @@ const MiniCSSExtractPlugin = require('mini-css-extract-plugin');
 const isDev = process.env.NODE_ENV === 'development';
 const isProd = !isDev;
 
-const dist = isDev ? 'C:\\Ospanel\\OSPanel\\domains\\panel' : './dist';
-// const dist = './dist';
+// const dist = isDev ? 'C:\\Ospanel\\OSPanel\\domains\\panel' : './dist';
+const dist = './dist';
 
 const filename = (ext) => (isDev ? `[name].${ext}` : `[name].[hash].${ext}`);
 const optimization = () => {
@@ -60,7 +60,7 @@ module.exports = {
   module: {
     rules: [
       {
-        test: /\.(png|svg|jpg|gif)$/,
+        test: /\.(png|jpg|gif)$/,
         use: ['file-loader']
       },
       {

@@ -1,54 +1,32 @@
 import React, { Component } from 'react';
 export default class extends Component {
   state = {
-    title: '',
-    date: null
+    value: ''
   };
 
   componentDidUpdate(prevProps) {
-    if (this.props.timestamp !== prevProps.timestamp) {
-      this.init();
+    if (this.props.data.timestamp !== prevProps.data.timestamp) {
+      this.setState({ value: this.props.value });
     }
   }
-  init = () => {
-    const timestamp = new Date(this.props.timestamp);
-    const date = {
-      hours: timestamp.getHours(),
-      minutes: timestamp.getMinutes(),
-      seconds: timestamp.getSeconds(),
-      day: timestamp.getDate(),
-      month: timestamp.getMonth(),
-      year: timestamp.getFullYear()
-    };
-    for (const key in date) {
-      let num = date[key];
-      if (('' + num).length < 2) num = '0' + num;
-      date[key] = num;
-    }
-    const dateFormat = `${date.hours}:${date.minutes}:${date.seconds} ${date.day}.${date.month}.${date.year}`;
-    this.setState({
-      title: `Резерв. от ${dateFormat}`,
-      date: dateFormat,
-      timestamp: +timestamp
-    });
-  };
   pushValues = () => {
-    const { title, date } = this.state;
-    const { timestamp } = this.props;
-    this.props.create(title, date, timestamp);
+    const { value } = this.state;
+    const { data } = this.props;
+    this.props.func(value, data);
   };
 
-  onValueChange = e => {
+  onValueChange = (e) => {
     e.persist();
-    this.setState({ title: e.target.value });
+    this.setState({ value: e.target.value });
   };
   render() {
-    const { title } = this.state;
+    const { value } = this.state;
+    const { title, target } = this.props;
     return (
-      <div id="modal-backup-create" className="uk-flex-top" uk-modal="true">
+      <div id={target} className="uk-flex-top" uk-modal="true" bg-close="false">
         <div className="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
           <div className="uk-modal-header">
-            <h2 className="uk-modal-title uk-text-center">BACKUP</h2>
+            <h2 className="uk-modal-title uk-text-center">{title}</h2>
 
             <div className="uk-margin">
               <input
@@ -57,7 +35,7 @@ export default class extends Component {
                 type="text"
                 placeholder="Title"
                 onChange={this.onValueChange}
-                value={title}
+                value={value}
               />
             </div>
           </div>
@@ -73,7 +51,7 @@ export default class extends Component {
               type="button"
               onClick={this.pushValues}
             >
-              Создать
+              Применить
             </button>
           </p>
         </div>

@@ -6,7 +6,7 @@ export default class {
     element,
     virtualElement,
     path,
-    ...[isLoading, isLoaded, showNotification]
+    ...[isLoading, isLoaded, checkStatusDOM]
   ) {
     this.element = element;
     this.virtualElement = virtualElement;
@@ -16,6 +16,7 @@ export default class {
     this.imgUploader = document.querySelector('#img-upload');
     this.isLoading = isLoading;
     this.isLoaded = isLoaded;
+    this.checkStatusDOM = checkStatusDOM;
   }
   onChange = () => {
     if (this.imgUploader.files && this.imgUploader.files[0]) {
@@ -31,6 +32,7 @@ export default class {
         })
         .then((res) => {
           this.virtualElement.src = this.element.src = `${this.path}/img/${res.data}`;
+          this.checkStatusDOM();
           showNotification(`Картинка заменена на ${res.data}.`, 'success');
         })
         .catch(() => showNotification('Ошибка сохранения!..', 'danger'))

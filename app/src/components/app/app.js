@@ -14,61 +14,43 @@ import Login from '../login';
 import { dirname } from 'path';
 import InputModal from '../input-modal';
 import showNotification from '../../helpers/showNotification.js';
+import {
+  updateTimestamp,
+  fetchCheckAuth,
+  fetchBackups,
+  fetchPages,
+  setStatusDOM
+} from '../../actions.js';
+import { connect } from 'react-redux';
+import { bindActionCreators } from 'redux';
 
-export default class extends Component {
+class App extends Component {
   currentPage = null;
   virtualDOM = null;
-  startDOM = null;
+  untouchedDOM = null;
   state = {
-    pageList: [],
-    newPageName: '',
     loading: true,
-    backupsList: [],
-    auth: false,
-    loginError: false,
-    loginLengthError: false,
-    timestamp: null
+    nextModal: null
   };
   componentDidMount() {
-    this.checkAuth();
+    this.props.fetchCheckAuth();
   }
-  componentDidUpdate(prevProps, prevState) {
-    if (this.state.auth !== prevState.auth) {
+  componentDidUpdate(prevProps) {
+    if (this.props.auth !== prevProps.auth) {
       this.init(null, this.currentPage);
     }
   }
-  checkAuth = () => {
-    axios.get('./api/checkAuth.php').then((res) => {
-      this.setState({
-        auth: res.data.auth
-      });
-    });
-  };
   login = (password) => {
-    if (password.length > 5) {
-      axios.post('./api/login.php', { password }).then((res) => {
-        this.setState({
-          auth: res.data.auth,
-          loginError: !res.data.auth,
-          loginLengthError: false
-        });
-        window.scrollTo(0, 0);
-      });
-    } else {
-      this.setState({
-        loginError: false,
-        loginLengthError: true
-      });
-    }
+    this.props.fetchCheckLogin(password);
   };
   init = (e, page) => {
     if (e) e.preventDefault();
-    if (this.state.auth) {
+    if (this.props.auth) {
       this.isLoading();
       this.iframe = document.querySelector('iframe');
       this.open(page);
-      this.loadPageList();
-      this.loadBackupsList();
+      this.props.fetchPages();
+      this.props.fetchBackups(this.currentPage);
     }
   };
   logout = () => {
@@ -87,7 +69,8 @@ export default class extends Component {
         .then(DOMHelper.wrapTextNodes)
         .then(DOMHelper.wrapImages)
         .then((dom) => {
-          this.virtualDOM = this.startDOM = dom;
+          this.virtualDOM = dom;
+          this.untouchedDOM = DOMHelper.serializeDOMToString(dom);
           return dom;
         })
         .then(DOMHelper.serializeDOMToString)
@@ -112,11 +95,6 @@ export default class extends Component {
   fileTransfer = (file, data = {}, loadBackupsList = false) => {
     this.isLoading();
     const newDom = this.virtualDOM.cloneNode(this.virtualDOM);
-    // const oldDom = this.startDOM.cloneNode(this.startDOM);
-    // console.log(this.virtualDOM === this.startDOM);
-    // console.log(newDom === oldDom);
-    // console.log(this.virtualDOM);
-    // console.log(this.startDOM.cloneNode(this.startDOM));
     DOMHelper.unwrapTextNodes(newDom);
     DOMHelper.unwrapImages(newDom);
     const html = DOMHelper.serializeDOMToString(newDom);
@@ -124,12 +102,18 @@ export default class extends Component {
     data.pageName = this.currentPage;
     axios
       .post(`./api/${file}`, data)
-      .then(() => showNotification('Успешно сохранено.', 'success'))
+      .then(() => {
+        this.untouchedDOM = DOMHelper.serializeDOMToString(this.virtualDOM);
+        this.checkStatusDOM();
+        showNotification('Успешно сохранено.', 'success');
+      })
       .catch(() => showNotification('Ошибка!..', 'danger'))
       .finally(this.isLoaded)
-      .finally(loadBackupsList ? this.loadBackupsList : null);
+      .finally(
+        loadBackupsList ? () => this.props.fetchBackups(this.currentPage) : null
+      );
   };
-  createBackup = (title, date, timestamp) => {
+  createBackup = (title, { date, timestamp }) => {
     const data = {
       title,
       date,
@@ -163,7 +147,7 @@ export default class extends Component {
           `[nodeid="${id}"]`
         );
 
-        new EditorText(element, virtualElement);
+        new EditorText(element, virtualElement, this.checkStatusDOM);
       });
     this.iframe.contentDocument.body
       .querySelectorAll('[editableimgid]')
@@ -178,27 +162,9 @@ export default class extends Component {
           dirname(this.currentPage),
           this.isLoading,
           this.isLoaded,
-          showNotification
+          this.checkStatusDOM
         );
       });
-  };
-  loadPageList = () => {
-    axios
-      .get('./api/pageList.php')
-      .then((res) => this.setState({ pageList: res.data }));
-    this.setState({ newPageName: '' });
-  };
-  loadBackupsList = () => {
-    axios
-      .get('./api/getBackups.php')
-      .then((res) => {
-        this.setState({
-          backupsList: res.data.filter(
-            (backup) => backup.page === this.currentPage
-          )
-        });
-      })
-      .catch(() => {});
   };
   restoreBackup = (e, backup) => {
     if (e) e.preventDefault();
@@ -225,28 +191,44 @@ export default class extends Component {
     this.setState({ loading: false });
   };
 
-  updateTimestamp = () => {
-    this.setState({ timestamp: +new Date() });
-  };
-  render() {
-    const {
-      loading,
-      pageList,
-      backupsList,
-      auth,
-      loginError,
-      loginLengthError,
-      timestamp
-    } = this.state;
-    if (!auth) {
-      return (
-        <Login
-          login={this.login}
-          lengthErr={loginLengthError}
-          logErr={loginError}
-        />
-      );
+  getFormatData = () => {
+    const { timestamp } = this.props;
+    if (timestamp !== null) {
+      const time = new Date(timestamp);
+      const date = {
+        hours: time.getHours(),
+        minutes: time.getMinutes(),
+        seconds: time.getSeconds(),
+        day: time.getDate(),
+        month: time.getMonth(),
+        year: time.getFullYear()
+      };
+      for (const key in date) {
+        let num = date[key];
+        if (('' + num).length < 2) num = '0' + num;
+        date[key] = num;
+      }
+      return `${date.hours}:${date.minutes}:${date.seconds} ${date.day}.${date.month}.${date.year}`;
     }
+    return '';
+  };
+  checkStatusDOM = () => {
+    if (this.untouchedDOM === null) return;
+    const status = !!(
+      this.untouchedDOM === DOMHelper.serializeDOMToString(this.virtualDOM)
+    );
+    this.props.setStatusDOM(!status);
+  };
+
+  setNextModal = (nextModal) => this.setState({ nextModal });
+
+  render() {
+    const { loading } = this.state;
+    const { timestamp, auth, backups, pages } = this.props;
+    const formatData = this.getFormatData();
+
+    if (!auth) return <Login />;
+
     return (
       <>
         <iframe src="" frameBorder="0"></iframe>
@@ -257,28 +239,62 @@ export default class extends Component {
           style={{ display: 'none' }}
         />
         <Spinner active={loading} />
-        <Panel disabled={this.currentPage === null ? true : false}>
-          <Record modal="modal-backup-create" onClick={this.updateTimestamp}>
+        <Panel
+          disabled={this.currentPage === null ? true : false}
+          setActiveModal={this.setNextModal}
+        >
+          <Record
+            modal="modal-backup-create"
+            onClick={this.props.updateTimestamp}
+          >
             Backup
           </Record>
-          <Record modal="modal-backup">Восстановить</Record>
-          <Record modal="modal-open" canDisable={false} color="primary">
+          <Record modal="modal-backup" checkUnsavedChanges={true}>
+            Восстановить
+          </Record>
+          <Record
+            modal="modal-open"
+            checkUnsavedChanges={true}
+            canDisable={false}
+            color="primary"
+          >
             Открыть
           </Record>
           <Record modal="modal-save" color="primary">
             Сохранить
           </Record>
           <Record modal="modal-meta">Редактировать META</Record>
-          <Record modal="modal-logout" color="danger" canDisable={false}>
+          <Record
+            checkUnsavedChanges={true}
+            modal="modal-logout"
+            color="danger"
+            canDisable={false}
+          >
             Выход
           </Record>
         </Panel>
-        <InputModal timestamp={timestamp} create={this.createBackup} />
+        <ConfrimModal
+          text={{
+            title: 'Сохранение',
+            descr: 'Имеются несохранённые изменения. Хотите сохранить?',
+            btn: 'Сохранить'
+          }}
+          target="modal-unsave"
+          redirectToModal={this.state.nextModal}
+          method={this.save}
+        />
+        <InputModal
+          title="BACKUP"
+          target="modal-backup-create"
+          value={`Резерв. от ${formatData}`}
+          func={this.createBackup}
+          data={{ date: formatData, timestamp }}
+        />
         <ConfrimModal
           text={{
             title: 'Сохранение',
             descr: 'Вы уверены, что хотите сохранить и опубликовать страницу?',
-            btn: 'Уверен'
+            btn: 'Уверен(a)'
           }}
           target="modal-save"
           method={this.save}
@@ -302,20 +318,42 @@ export default class extends Component {
         />
         <ChooseModal
           target="modal-open"
-          data={pageList}
+          data={pages}
           redirect={this.init}
           notFound="Страницы не найдены.."
         />
         <ChooseModal
           target="modal-backup"
-          data={backupsList}
+          data={backups}
           redirect={this.restoreBackup}
           notFound="Резервные копии не найдены :("
         />
         <EditorMeta
           virtualDOM={this.virtualDOM === null ? false : this.virtualDOM}
+          checkStatusDOM={this.checkStatusDOM}
         />
       </>
     );
   }
 }
+
+const mapStateToProps = ({ timestamp, auth, backups, pages }) => ({
+  timestamp,
+  auth,
+  backups,
+  pages
+});
+const mapDispathToProps = (dispatch) => {
+  return bindActionCreators(
+    {
+      updateTimestamp,
+      fetchCheckAuth,
+      fetchBackups,
+      fetchPages,
+      setStatusDOM
+    },
+    dispatch
+  );
+};
+
+export default connect(mapStateToProps, mapDispathToProps)(App);

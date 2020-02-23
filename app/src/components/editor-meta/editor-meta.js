@@ -12,7 +12,7 @@ export default class extends Component {
     this.getMeta(this.props.virtualDOM);
   }
 
-  getMeta = virtualDOM => {
+  getMeta = (virtualDOM) => {
     if (virtualDOM === false) return;
 
     this.title =
@@ -49,8 +49,9 @@ export default class extends Component {
     this.title.innerHTML = this.state.meta.title;
     this.keywords.setAttribute('content', this.state.meta.keywords);
     this.description.setAttribute('content', this.state.meta.description);
+    this.props.checkStatusDOM();
   };
-  onValueChange = e => {
+  onValueChange = (e) => {
     const type = e.target.getAttribute('data-type');
     e.persist();
     this.setState(({ meta }) => ({
@@ -83,7 +84,7 @@ export default class extends Component {
                   type="text"
                   placeholder="Title"
                   value={title}
-                  onChange={e => this.onValueChange(e)}
+                  onChange={(e) => this.onValueChange(e)}
                 />
               </div>
               <div className="uk-margin">
@@ -93,7 +94,7 @@ export default class extends Component {
                   rows="5"
                   placeholder="Keywords"
                   value={keywords}
-                  onChange={e => this.onValueChange(e)}
+                  onChange={(e) => this.onValueChange(e)}
                 ></textarea>
               </div>
               <div className="uk-margin">
@@ -103,7 +104,7 @@ export default class extends Component {
                   rows="5"
                   placeholder="Description"
                   value={description}
-                  onChange={e => this.onValueChange(e)}
+                  onChange={(e) => this.onValueChange(e)}
                 ></textarea>
               </div>
             </form>

@@ -1,6 +1,13 @@
 <?php
 session_start();
-if (!$_SESSION['auth']) {
+$forbidden = false;
+if (!preg_match('/' . $_SESSION['IP'] . '/', $_SERVER['REMOTE_ADDR'])) {
+  $forbidden = true;
+  session_destroy();
+} else if (!$_SESSION['auth']) {
+  $forbidden = true;
+}
+if ($forbidden) {
   header('HTTP/1.0 403 Forbidden');
   exit;
 }

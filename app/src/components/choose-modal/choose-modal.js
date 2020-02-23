@@ -46,14 +46,15 @@ export default ({ target, data, redirect, open, notFound }) => {
           <div
             className="icon edit"
             onClick={() =>
-              UIkit.modal.prompt('Название:', item.name).then((newName) =>
-                axios
-                  .post('./api/changeNameBackup.php', {
-                    fileName: item.file,
-                    newName
-                  })
-                  .then((res) => setInfo(res.data))
-              )
+              UIkit.modal.prompt('Название:', item.name).then((newName) => {
+                if (newName !== null)
+                  axios
+                    .post('./api/changeNameBackup.php', {
+                      fileName: item.file,
+                      newName
+                    })
+                    .then((res) => setInfo(res.data));
+              })
             }
           >
             <img src={editImage} alt="edit" />

@@ -1,20 +1,29 @@
 import React from 'react';
+import { connect } from 'react-redux';
 
 export const Record = ({
   modal,
   children,
   onClick,
   disabled,
-  color = 'default',
   handlePanel,
+  unsavedChanges,
+  setActiveModal,
+  color = 'default',
+  checkUnsavedChanges = false,
   canDisable = true
 }) => {
   return (
     <button
-      uk-toggle={`target: #${modal}`}
+      uk-toggle={
+        checkUnsavedChanges && unsavedChanges
+          ? `target: #modal-unsave`
+          : `target: #${modal}`
+      }
       className={`uk-button uk-button-${color} uk-margin-small-right panel__button`}
       disabled={canDisable ? disabled : false}
       onClick={() => {
+        if (checkUnsavedChanges && unsavedChanges) setActiveModal(modal);
         handlePanel();
         typeof onClick === 'function' ? onClick() : null;
       }}
@@ -24,7 +33,7 @@ export const Record = ({
   );
 };
 
-export default ({ disabled, children }) => {
+const panel = ({ disabled, children, unsavedChanges, setActiveModal }) => {
   let panel;
   let hamburger;
   const handlePanel = () => {
@@ -35,7 +44,12 @@ export default ({ disabled, children }) => {
     <nav className="navbar">
       <div className="panel" ref={(el) => (panel = el)}>
         {React.Children.map(children, (child) => {
-          return React.cloneElement(child, { disabled, handlePanel });
+          return React.cloneElement(child, {
+            disabled,
+            handlePanel,
+            unsavedChanges,
+            setActiveModal
+          });
         })}
       </div>
       <div
@@ -50,3 +64,7 @@ export default ({ disabled, children }) => {
     </nav>
   );
 };
+
+const mapStateToProps = ({ unsavedChanges }) => ({ unsavedChanges });
+
+export default connect(mapStateToProps)(panel);
